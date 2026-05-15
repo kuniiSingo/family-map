@@ -572,8 +572,17 @@ function startApp() {
   initLeaflet();
   startFirebaseListeners();
   startGPS();
-  // 初期表示後にもサイズ再計算
-  setTimeout(() => { if(map) map.invalidateSize(); }, 500);
+  // 段階的にマップサイズを再計算（描画タイミングのずれを吸収）
+  [300, 800, 1500, 3000].forEach(delay => {
+    setTimeout(() => {
+      if(map) {
+        map.invalidateSize();
+        // メンバーが既にいれば再描画
+        const ids = Object.keys(members);
+        if(ids.length > 0) ids.forEach(id => updateLeafletMember(id, members[id]));
+      }
+    }, delay);
+  });
   document.getElementById('locate-btn').classList.add('visible');
 
   // 設定画面の招待コード表示
@@ -602,7 +611,9 @@ function initLeaflet() {
     const tabbar = document.querySelector('.tab-bar');
     const hh = header ? header.offsetHeight : 48;
     const th = tabbar ? tabbar.offsetHeight : 50;
-    return appH - hh - th;
+    const h = appH - hh - th;
+    console.log('[FM] mapHeight:', h, 'appH:', appH, 'hh:', hh, 'th:', th);
+    return h > 100 ? h : appH * 0.6; // 最低限の高さを保証
   }
 
   const h = getMapHeight();
@@ -639,7 +650,9 @@ function initLeaflet() {
     }
   });
 
-  setTimeout(() => { if(map) map.invalidateSize(); }, 300);
+  setTimeout(() => { if(map) map.invalidateSize(); }, 100);
+  setTimeout(() => { if(map) map.invalidateSize(); }, 500);
+  setTimeout(() => { if(map) map.invalidateSize(); }, 1000);
 }
 
 function makeIcon(name, color) {
@@ -711,6 +724,13 @@ function startFirebaseListeners() {
     renderMemberChips();
     renderMembersList();
     renderChatTabs();
+    // データ取得のたびにマップサイズを再確認
+    if(map) {
+      map.invalidateSize();
+    } else {
+      // mapがまだ初期化されていなければ再初期化
+      initLeaflet();
+    }
   });
 
   db.ref(`groups/${groupId}/messages`).limitToLast(100).on('value', snap => {
