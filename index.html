@@ -988,27 +988,13 @@ function showToast(msg) {
 }
 </script>
 <script>
+// 既存のService Workerをすべてアンインストール（キャッシュ問題を根本解決）
 if('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js')
-      .then(reg => {
-        // 新バージョンがあれば即時適用
-        reg.addEventListener('updatefound', () => {
-          const newSW = reg.installing;
-          newSW.addEventListener('statechange', () => {
-            if(newSW.state === 'installed' && navigator.serviceWorker.controller) {
-              newSW.postMessage({ type: 'SKIP_WAITING' });
-            }
-          });
-        });
-        // 定期的に更新確認（1分ごと）
-        setInterval(() => reg.update(), 60000);
-      })
-      .catch(() => {});
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(reg => reg.unregister());
   });
-  // SW更新時にページをリロード
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    window.location.reload();
+  caches.keys().then(keys => {
+    keys.forEach(key => caches.delete(key));
   });
 }
 </script>
