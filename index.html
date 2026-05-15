@@ -349,6 +349,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku
         <p>このデバイスのデータを削除してログアウトします</p>
         <button class="btn-danger" onclick="logout()">ログアウト</button>
       </div>
+      <div class="s-card" id="diag-card">
+        <h3>🔍 接続診断</h3>
+        <div id="diag-log" style="font-size:11px;font-family:monospace;color:var(--color-text-secondary);line-height:1.8;background:var(--color-background-secondary);padding:10px;border-radius:8px;margin-bottom:10px;min-height:60px;"></div>
+        <button class="btn-green" onclick="runDiag()" style="font-size:12px;padding:7px 14px;">再診断</button>
+      </div>
+      <div style="text-align:center;padding:16px 0 8px;">
+        <span style="font-size:11px;color:var(--color-text-tertiary);">v1.0.1 · 2026-05-15</span>
+      </div>
     </div>
   </div>
 </div>
@@ -983,6 +991,57 @@ function copyShareUrl() {
 }
 
 // ── タブ切替 ─────────────────────────────────────
+function runDiag() {
+  const log = document.getElementById('diag-log');
+  if(!log) return;
+  const lines = [];
+  const now = new Date().toLocaleTimeString('ja-JP');
+  lines.push(`🕐 ${now}`);
+  lines.push(`👤 myId: ${myId||'❌ なし'}`);
+  lines.push(`📛 myName: ${myName||'❌ なし'}`);
+  lines.push(`🏠 groupId: ${groupId||'❌ なし'}`);
+  lines.push(`🔑 inviteCode: ${inviteCode||'❌ なし'}`);
+
+  // localStorage確認
+  const lsGroup = localStorage.getItem('fm_group');
+  const lsId    = localStorage.getItem('fm_id');
+  lines.push(`💾 LS.groupId: ${lsGroup||'❌ なし'}`);
+  lines.push(`💾 LS.myId: ${lsId||'❌ なし'}`);
+
+  // Firebase接続状態
+  lines.push(`🔥 Firebase初期化: ${typeof firebase !== 'undefined' ? '✅' : '❌'}`);
+
+  // Firebase接続テスト
+  lines.push(`📡 接続テスト中...`);
+  log.innerHTML = lines.join('<br>');
+
+  if(typeof db !== 'undefined') {
+    db.ref('.info/connected').once('value')
+      .then(s => {
+        lines.push(`📡 .info/connected: ${s.val() ? '✅ true' : '❌ false'}`);
+        // groupIdのデータ確認
+        if(groupId) {
+          return db.ref(`groups/${groupId}/members`).once('value');
+        }
+      })
+      .then(snap => {
+        if(snap) {
+          const data = snap.val();
+          lines.push(`👥 members取得: ${data ? '✅ '+ Object.keys(data).length+'件' : '❌ null'}`);
+        }
+        lines.push(`✅ 診断完了`);
+        log.innerHTML = lines.join('<br>');
+      })
+      .catch(err => {
+        lines.push(`❌ エラー: ${err.message}`);
+        log.innerHTML = lines.join('<br>');
+      });
+  } else {
+    lines.push(`❌ db未定義`);
+    log.innerHTML = lines.join('<br>');
+  }
+}
+
 function showTab(t) {
   ['map','chat','members','settings'].forEach(v => {
     document.getElementById('view-'+v).classList.toggle('show', v===t);
@@ -1004,6 +1063,7 @@ function showTab(t) {
     document.getElementById('mbadge').style.display = 'none';
     renderChatTabs(); renderMessages(false);
   }
+  if(t==='settings') { setTimeout(runDiag, 300); }
 }
 
 // ── トースト ─────────────────────────────────────
