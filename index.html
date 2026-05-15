@@ -352,7 +352,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku
         <button class="btn-green" onclick="runDiag()" style="font-size:12px;padding:7px 14px;">再診断</button>
       </div>
       <div style="text-align:center;padding:16px 0 8px;">
-        <span style="font-size:11px;color:var(--color-text-tertiary);">v1.0.6 · 2026-05-15</span>
+        <span style="font-size:11px;color:var(--color-text-tertiary);">v1.0.7 · 2026-05-15</span>
       </div>
     </div>
   </div>
@@ -376,7 +376,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku
     </div>
   </div>
   <div style="text-align:center;margin-top:20px;">
-    <span style="font-size:11px;color:#bbb;">v1.0.6 · 2026-05-15</span>
+    <span style="font-size:11px;color:#bbb;">v1.0.7 · 2026-05-15</span>
   </div>
 </div>
 
@@ -447,38 +447,55 @@ auth.onAuthStateChanged(user => {
   if(user) {
     currentUser = user;
     myId    = user.uid;
-    myName  = localStorage.getItem('fm_name_' + myId) || user.displayName || '';
     myColor = localStorage.getItem('fm_color') || '#534AB7';
-    groupId = localStorage.getItem('fm_group_' + myId) || '';
-    groupName = localStorage.getItem('fm_gname_' + myId) || '';
-    inviteCode = localStorage.getItem('fm_code_' + myId) || '';
-    console.log('[FM] auth OK', {myId, myName, groupId});
 
-    if(groupId) {
-      // ログイン済み＋グループ参加済み → アプリ起動
-      document.getElementById('onboarding').style.display = 'none';
-      // URLに招待コードがあれば自動でグループ変更を促す
-      if(urlCode) {
-        const raw = urlCode.replace(/[^A-Za-z0-9]/g,'').toUpperCase();
-        const formatted = raw.length > 4 ? raw.slice(0,4)+'-'+raw.slice(4,8) : raw;
-        if(confirm(`招待コード ${formatted} のグループに参加しますか？`)) {
-          groupId = ''; // リセットしてグループ参加フローへ
-          goStep('ob-s2');
-          document.getElementById('ob-code').value = formatted;
-          document.getElementById('onboarding').style.display = 'flex';
-          return;
-        }
-      }
-      startApp();
+    // まずlocalStorageから復元を試みる
+    const lsGroup = localStorage.getItem('fm_group_' + myId) || '';
+    const lsName  = localStorage.getItem('fm_name_'  + myId) || user.displayName || '';
+
+    if(lsGroup) {
+      // localStorageにグループ情報あり → 即起動
+      myName     = lsName;
+      groupId    = lsGroup;
+      groupName  = localStorage.getItem('fm_gname_' + myId) || '';
+      inviteCode = localStorage.getItem('fm_code_'  + myId) || '';
+      console.log('[FM] auth OK (from LS)', {myId, myName, groupId});
+      handleUrlCode(() => {
+        document.getElementById('onboarding').style.display = 'none';
+        startApp();
+      });
     } else {
-      // ログイン済みだがグループ未参加 → グループ選択へ
-      if(urlCode) {
-        const raw = urlCode.replace(/[^A-Za-z0-9]/g,'').toUpperCase();
-        const formatted = raw.length > 4 ? raw.slice(0,4)+'-'+raw.slice(4,8) : raw;
-        document.getElementById('ob-code').value = formatted;
-      }
-      goStep('ob-s2');
-      document.getElementById('onboarding').style.display = 'flex';
+      // localStorageになければFirebaseから検索
+      console.log('[FM] checking Firebase for user profile...');
+      db.ref('userProfiles/' + myId).once('value').then(snap => {
+        const profile = snap.val();
+        if(profile && profile.groupId) {
+          myName     = profile.name     || user.displayName || '';
+          groupId    = profile.groupId;
+          groupName  = profile.groupName || '';
+          inviteCode = profile.inviteCode || '';
+          // localStorageにも保存しておく
+          localStorage.setItem('fm_name_'  + myId, myName);
+          localStorage.setItem('fm_group_' + myId, groupId);
+          localStorage.setItem('fm_gname_' + myId, groupName);
+          localStorage.setItem('fm_code_'  + myId, inviteCode);
+          console.log('[FM] auth OK (from Firebase)', {myId, myName, groupId});
+          handleUrlCode(() => {
+            document.getElementById('onboarding').style.display = 'none';
+            startApp();
+          });
+        } else {
+          // グループ未参加 → グループ選択へ
+          myName = user.displayName || '';
+          console.log('[FM] no group found, showing onboarding');
+          if(urlCode) {
+            const fmt = fmtCode(urlCode);
+            document.getElementById('ob-code').value = fmt;
+          }
+          goStep('ob-s2');
+          document.getElementById('onboarding').style.display = 'flex';
+        }
+      });
     }
   } else {
     // 未ログイン → Googleログイン画面
@@ -486,13 +503,33 @@ auth.onAuthStateChanged(user => {
     goStep('ob-s1');
     document.getElementById('onboarding').style.display = 'flex';
     if(urlCode) {
-      // URLコードをセッションストレージに一時保存
       sessionStorage.setItem('pendingCode', urlCode);
     }
   }
 });
 
 // ── オンボーディング ──────────────────────────────
+// 招待コードの整形
+function fmtCode(raw) {
+  let v = raw.replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+  return v.length > 4 ? v.slice(0,4)+'-'+v.slice(4,8) : v;
+}
+
+// URLコードの処理
+function handleUrlCode(next) {
+  if(urlCode) {
+    const fmt = fmtCode(urlCode);
+    if(confirm(`招待コード ${fmt} の別グループに参加しますか？\n（キャンセルでそのまま継続）`)) {
+      groupId = '';
+      document.getElementById('ob-code').value = fmt;
+      goStep('ob-s2');
+      document.getElementById('onboarding').style.display = 'flex';
+      return;
+    }
+  }
+  next();
+}
+
 function signInWithGoogle() {
   const btn = document.getElementById('google-login-btn');
   if(btn) { btn.disabled = true; }
@@ -586,6 +623,12 @@ function saveUserData() {
   localStorage.setItem('fm_group_' + myId, groupId);
   localStorage.setItem('fm_gname_' + myId, groupName);
   localStorage.setItem('fm_code_'  + myId, inviteCode);
+  // Firebaseにもユーザープロフィールを保存（端末を変えても復元できるように）
+  db.ref('userProfiles/' + myId).set({
+    name: myName, groupId, groupName, inviteCode,
+    email: currentUser?.email || '',
+    updatedAt: Date.now()
+  });
 }
 
 function hideOnboarding() {
