@@ -424,12 +424,14 @@ if(urlCode) {
 }
 
 // ── セッションチェック ────────────────────────────
+console.log('[FM] session check', {myId, myName, groupId, inviteCode});
 if(myId && myName && groupId) {
   // 認証済み: オンボーディングを即非表示にしてアプリ起動
   const ob = document.getElementById('onboarding');
   ob.style.display = 'none';
   startApp();
 } else {
+  console.log('[FM] -> onboarding (missing:', !myId?'myId':'', !myName?'myName':'', !groupId?'groupId':'', ')');
   document.getElementById('onboarding').style.display = 'flex';
 }
 
@@ -552,6 +554,7 @@ function startApp() {
   groupId    = localStorage.getItem('fm_group') || groupId;
   groupName  = localStorage.getItem('fm_gname') || groupName;
   inviteCode = localStorage.getItem('fm_code')  || inviteCode;
+  console.log('[FM] startApp called', {myId, myName, groupId, inviteCode});
 
   const appEl = document.getElementById('app');
   appEl.style.opacity = '1';
@@ -684,6 +687,7 @@ function startFirebaseListeners() {
 
   db.ref('.info/connected').on('value', s => {
     const ok = s.val();
+    console.log('[FM] Firebase connected:', ok);
     if(ok) clearTimeout(connTimeout);
     document.getElementById('sdot').className = 'sdot' + (ok?' on':'');
     document.getElementById('stxt').textContent = ok ? '接続済み' : '接続中...';
