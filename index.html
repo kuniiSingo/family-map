@@ -11,26 +11,26 @@ html,body{height:100%;overflow:hidden;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku Gothic ProN',sans-serif;background:#000;}
 
 /* ── ONBOARDING ── */
-#onboarding{position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#1a1040 0%,#2d1b6e 50%,#1a1040 100%);padding:32px 24px;}
+#onboarding{position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f2f2f7;padding:32px 24px;}
 #onboarding.hide{animation:fadeOut .4s ease forwards;}
 @keyframes fadeOut{to{opacity:0;pointer-events:none;}}
-.ob-logo{width:64px;height:64px;background:rgba(255,255,255,.12);border-radius:20px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;}
-.ob-title{font-size:26px;font-weight:700;color:#fff;margin-bottom:6px;text-align:center;}
-.ob-sub{font-size:14px;color:rgba(255,255,255,.6);text-align:center;margin-bottom:36px;line-height:1.6;}
-.ob-card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:24px;width:100%;max-width:340px;}
-.ob-label{font-size:12px;color:rgba(255,255,255,.55);margin-bottom:6px;font-weight:500;}
-.ob-input{width:100%;padding:12px 14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:12px;color:#fff;font-size:15px;margin-bottom:14px;-webkit-appearance:none;outline:none;}
-.ob-input::placeholder{color:rgba(255,255,255,.35);}
-.ob-input:focus{border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.15);}
+.ob-logo{width:64px;height:64px;background:#534AB7;border-radius:20px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;}
+.ob-title{font-size:26px;font-weight:700;color:#1a1a1a;margin-bottom:6px;text-align:center;}
+.ob-sub{font-size:14px;color:#888;text-align:center;margin-bottom:36px;line-height:1.6;}
+.ob-card{background:#fff;border:1px solid #e5e5ea;border-radius:20px;padding:24px;width:100%;max-width:340px;box-shadow:0 2px 16px rgba(0,0,0,.08);}
+.ob-label{font-size:12px;color:#888;margin-bottom:6px;font-weight:500;}
+.ob-input{width:100%;padding:12px 14px;background:#f8f8f8;border:1px solid #e0e0e0;border-radius:12px;color:#1a1a1a;font-size:15px;margin-bottom:14px;-webkit-appearance:none;outline:none;}
+.ob-input::placeholder{color:#bbb;}
+.ob-input:focus{border-color:#534AB7;background:#fff;}
 .ob-btn{width:100%;padding:14px;background:#7F77DD;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s;margin-top:4px;}
 .ob-btn:active{opacity:.8;}
 .ob-err{font-size:12px;color:#F09595;margin-top:-8px;margin-bottom:10px;min-height:16px;}
 .ob-divider{display:flex;align-items:center;gap:10px;margin:14px 0;}
-.ob-divider span{font-size:11px;color:rgba(255,255,255,.35);white-space:nowrap;}
-.ob-divider::before,.ob-divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.15);}
+.ob-divider span{font-size:11px;color:#bbb;white-space:nowrap;}
+.ob-divider::before,.ob-divider::after{content:'';flex:1;height:1px;background:#e5e5ea;}
 .ob-step{display:none;}
 .ob-step.active{display:block;}
-.ob-back{background:none;border:none;color:rgba(255,255,255,.5);font-size:13px;cursor:pointer;padding:8px 0;display:block;text-align:center;width:100%;margin-top:8px;}
+.ob-back{background:none;border:none;color:#aaa;font-size:13px;cursor:pointer;padding:8px 0;display:block;text-align:center;width:100%;margin-top:8px;}
 
 /* ── APP ── */
 #app{width:100%;height:100dvh;display:flex;flex-direction:column;background:#f0f0f0;}
@@ -94,18 +94,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku
 /* メッセージのイージングアニメーション */
 @keyframes msgIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 @keyframes msgInMe{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
-.msg-wrap{animation:msgIn .3s cubic-bezier(.34,1.56,.64,1) both;display:flex;flex-direction:column;align-items:flex-start;}
-.msg-wrap.me{animation:msgInMe .3s cubic-bezier(.34,1.56,.64,1) both;align-items:flex-end;}
-
-.msg-row{display:flex;gap:7px;align-items:flex-end;width:100%;}
+.msg-wrap{animation:msgIn .3s cubic-bezier(.34,1.56,.64,1) both;display:flex;flex-direction:column;align-items:flex-start;width:100%;}
+.msg-wrap.me{animation:msgInMe .3s cubic-bezier(.34,1.56,.64,1) both;align-items:flex-end;width:100%;}
+.msg-row{display:flex;gap:7px;align-items:flex-end;}
 .msg-row.me{flex-direction:row-reverse;}
 .msg-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
 .msg-name{font-size:10px;color:#aaa;margin-bottom:3px;padding-left:2px;}
 .msg-bubble{max-width:72%;padding:9px 13px;border-radius:18px;font-size:14px;line-height:1.5;word-break:break-word;}
 .msg-row:not(.me) .msg-bubble{background:#fff;border-bottom-left-radius:4px;color:#1a1a1a;}
 .msg-row.me .msg-bubble{background:#534AB7;color:#fff;border-bottom-right-radius:4px;}
-.msg-time{font-size:10px;color:#ccc;margin-top:3px;padding:0 2px;width:100%;}
-.msg-row.me .msg-time{text-align:right;}
+.msg-time{font-size:10px;color:#ccc;margin-top:3px;padding:0 4px;}
+.msg-wrap.me .msg-time{text-align:right;}
+.msg-wrap:not(.me) .msg-time{text-align:left;padding-left:37px;}
 
 .chat-input-wrap{background:#fff;border-top:1px solid #e8e8e8;padding:8px 12px;flex-shrink:0;}
 .vbar{display:none;align-items:center;gap:8px;padding:5px 10px;background:#fff0f0;border-radius:8px;margin-bottom:6px;font-size:12px;color:#A32D2D;}
@@ -191,7 +191,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku
       <div class="ob-err" id="ob-err1"></div>
       <button class="ob-btn" onclick="checkCode()">次へ</button>
       <div class="ob-divider"><span>はじめての方は</span></div>
-      <button class="ob-btn" style="background:rgba(255,255,255,.15);" onclick="goStep('ob-s3')">新しく家族グループを作る</button>
+      <button class="ob-btn" style="background:#f0eeff;color:#534AB7;" onclick="goStep('ob-s3')">新しく家族グループを作る</button>
     </div>
 
     <!-- STEP 2: 名前入力（招待コードあり） -->
@@ -579,6 +579,13 @@ function initLeaflet() {
     zoomControl: false,
     attributionControl: false
   });
+  // 起動時に現在地へ移動
+  if(navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      map.setView([pos.coords.latitude, pos.coords.longitude], 16, {animate:false});
+      pushLoc(pos.coords.latitude, pos.coords.longitude);
+    }, () => {});
+  }
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     subdomains: ['a','b','c']
@@ -821,11 +828,9 @@ function renderMessages(animate) {
       ${!isMe?`<div class="msg-name" style="padding-left:37px;color:${s.color};">${s.name}</div>`:''}
       <div class="msg-row ${isMe?'me':''}">
         ${!isMe?`<div class="msg-av" style="background:${s.color};">${ini(s.name)}</div>`:''}
-        <div style="display:flex;flex-direction:column;align-items:${isMe?'flex-end':'flex-start'};">
-          <div class="msg-bubble">${esc(msg.text)}</div>
-          <div class="msg-time">${t}</div>
-        </div>
+        <div class="msg-bubble">${esc(msg.text)}</div>
       </div>
+      <div class="msg-time">${t}</div>
     </div>`;
   }).join('');
   el.scrollTop = el.scrollHeight;
