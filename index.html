@@ -320,7 +320,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku
         <h3>👤 プロフィール</h3>
         <p>マップとメッセージに表示される名前です</p>
         <input class="s-input" id="name-input" placeholder="例：お父さん"/>
-        <button class="btn-green" onclick="saveName()">保存する</button>
+        <button class="btn-purple" onclick="saveName()">保存する</button>
       </div>
 
       <div class="s-card">
@@ -352,7 +352,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku
         <button class="btn-green" onclick="runDiag()" style="font-size:12px;padding:7px 14px;">再診断</button>
       </div>
       <div style="text-align:center;padding:16px 0 8px;">
-        <span style="font-size:11px;color:var(--color-text-tertiary);">v1.0.5 · 2026-05-15</span>
+        <span style="font-size:11px;color:var(--color-text-tertiary);">v1.0.6 · 2026-05-15</span>
       </div>
     </div>
   </div>
@@ -374,6 +374,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku
       <button class="btn-cancel" onclick="closeModal()">キャンセル</button>
       <button class="btn-add" onclick="addMember()">追加</button>
     </div>
+  </div>
+  <div style="text-align:center;margin-top:20px;">
+    <span style="font-size:11px;color:#bbb;">v1.0.6 · 2026-05-15</span>
   </div>
 </div>
 
@@ -596,14 +599,11 @@ function hideOnboarding() {
 
 function logout() {
   if(!confirm('ログアウトしますか？')) return;
-  // Firebase Authからサインアウト
-  auth.signOut().then(() => {
-    // このユーザーのlocalStorageキーを削除
-    if(myId) {
-      ['fm_name_','fm_group_','fm_gname_','fm_code_'].forEach(k => localStorage.removeItem(k + myId));
-    }
-    localStorage.removeItem('fm_color');
-  });
+  if(myId) {
+    ['fm_name_','fm_group_','fm_gname_','fm_code_'].forEach(k => localStorage.removeItem(k + myId));
+  }
+  localStorage.removeItem('fm_color');
+  auth.signOut().then(() => location.reload());
 }
 
 // ── アプリ起動 ────────────────────────────────────
