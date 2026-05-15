@@ -414,7 +414,12 @@ let selCol     = '#534AB7';
 
 // ── URLから招待コードを自動読み込み ──────────────
 const urlCode = new URLSearchParams(location.search).get('code');
-if(urlCode) document.getElementById('ob-code').value = urlCode.toUpperCase();
+if(urlCode) {
+  // URLパラメータはハイフンなし(ABCD1234)で渡ってくるので整形して挿入
+  let raw = urlCode.replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+  if(raw.length > 4) raw = raw.slice(0,4) + '-' + raw.slice(4,8);
+  document.getElementById('ob-code').value = raw;
+}
 
 // ── セッションチェック ────────────────────────────
 if(myId && myName && groupId) {
@@ -449,7 +454,7 @@ function checkCode() {
   const code = document.getElementById('ob-code').value.trim().toUpperCase();
   document.getElementById('ob-err1').textContent = '';
   if(code.length < 9) { document.getElementById('ob-err1').textContent = '招待コードを正しく入力してください'; return; }
-  const codeKey = code.replace('-','');
+  const codeKey = code.replaceAll('-','');
   db.ref('groups').orderByChild('code').equalTo(codeKey).once('value').then(snap => {
     if(!snap.val()) { document.getElementById('ob-err1').textContent = '招待コードが見つかりません。確認してください。'; return; }
     const gid = Object.keys(snap.val())[0];
@@ -510,7 +515,7 @@ function createGroup() {
   localStorage.setItem('fm_gname', groupName);
   localStorage.setItem('fm_code',  inviteCode);
 
-  const codeKey = code.replace('-','');
+  const codeKey = code.replaceAll('-','');
   db.ref(`groups/${groupId}`).set({
     name: groupName,
     code: codeKey,
@@ -550,7 +555,7 @@ function startApp() {
   // 設定画面の招待コード表示
   document.getElementById('invite-code-display').textContent = inviteCode || '------';
   document.getElementById('share-url-display').textContent =
-    `${location.origin}${location.pathname}?code=${(inviteCode||'').replace('-','')}`;
+    `${location.origin}${location.pathname}?code=${(inviteCode||'').replaceAll('-','')}`;
   document.getElementById('name-input').value = myName;
 }
 
@@ -689,6 +694,28 @@ function startFirebaseListeners() {
     renderMessages(messages.length > prev); // 新着のみアニメーション
   });
 }
+
+// ── アプリ復帰時の再接続 ────────────────────────────
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible') {
+    // 画面復帰時にFirebase接続を確認・GPSを再取得
+    if(groupId) {
+      db.ref(`groups/${groupId}/members`).once('value').then(snap => {
+        const m = snap.val() || {};
+        Object.keys(m).forEach(id => updateLeafletMember(id, m[id]));
+        renderMemberChips();
+        renderMembersList();
+      });
+    }
+    // GPS位置を即時取得して送信
+    if(myName && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => pushLoc(pos.coords.latitude, pos.coords.longitude),
+        () => {}
+      );
+    }
+  }
+});
 
 // ── GPS ──────────────────────────────────────────
 function startGPS() {
@@ -914,7 +941,7 @@ function copyInviteCode() {
   navigator.clipboard.writeText(inviteCode).then(() => showToast('招待コードをコピーしました'));
 }
 function copyShareUrl() {
-  const url = `${location.origin}${location.pathname}?code=${(inviteCode||'').replace('-','')}`;
+  const url = `${location.origin}${location.pathname}?code=${(inviteCode||'').replaceAll('-','')}`;
   navigator.clipboard.writeText(url).then(() => showToast('URLをコピーしました'));
 }
 
@@ -953,8 +980,24 @@ function showToast(msg) {
 if('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js')
-      .then(reg => console.log('SW registered'))
-      .catch(err => console.log('SW error:', err));
+      .then(reg => {
+        // 新バージョンがあれば即時適用
+        reg.addEventListener('updatefound', () => {
+          const newSW = reg.installing;
+          newSW.addEventListener('statechange', () => {
+            if(newSW.state === 'installed' && navigator.serviceWorker.controller) {
+              newSW.postMessage({ type: 'SKIP_WAITING' });
+            }
+          });
+        });
+        // 定期的に更新確認（1分ごと）
+        setInterval(() => reg.update(), 60000);
+      })
+      .catch(() => {});
+  });
+  // SW更新時にページをリロード
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    window.location.reload();
   });
 }
 </script>
