@@ -489,6 +489,9 @@ function completeOnboarding() {
   localStorage.setItem('fm_id',    myId);
   localStorage.setItem('fm_name',  myName);
   localStorage.setItem('fm_color', myColor);
+  localStorage.setItem('fm_group', groupId);
+  localStorage.setItem('fm_gname', groupName);
+  localStorage.setItem('fm_code',  inviteCode);
   db.ref(`groups/${groupId}/members/${myId}`).set({ name: myName, color: myColor, history: [] });
   hideOnboarding();
 }
@@ -540,6 +543,14 @@ function logout() {
 
 // ── アプリ起動 ────────────────────────────────────
 function startApp() {
+  // localStorageから最新値を再読み込み（ブラウザ再起動後も確実に復元）
+  myId       = localStorage.getItem('fm_id')    || myId;
+  myName     = localStorage.getItem('fm_name')  || myName;
+  myColor    = localStorage.getItem('fm_color') || myColor;
+  groupId    = localStorage.getItem('fm_group') || groupId;
+  groupName  = localStorage.getItem('fm_gname') || groupName;
+  inviteCode = localStorage.getItem('fm_code')  || inviteCode;
+
   const appEl = document.getElementById('app');
   appEl.style.opacity = '1';
   appEl.style.pointerEvents = 'auto';
