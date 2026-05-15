@@ -191,39 +191,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku
   <div class="ob-sub">家族の居場所をリアルタイムで共有</div>
 
   <div class="ob-card">
-    <!-- STEP 1: 招待コード入力 -->
+    <!-- STEP 1: Googleログイン -->
     <div class="ob-step active" id="ob-s1">
-      <div class="ob-label">招待コード</div>
-      <input class="ob-input" id="ob-code" placeholder="例：FAMI-1234" maxlength="9" oninput="formatCode(this)"/>
-      <div class="ob-err" id="ob-err1"></div>
-      <button class="ob-btn" onclick="checkCode()">次へ</button>
-      <div class="ob-divider"><span>はじめての方は</span></div>
-      <button class="ob-btn" style="background:#f0eeff;color:#534AB7;" onclick="goStep('ob-s3')">新しく家族グループを作る</button>
+      <button class="ob-btn" id="google-login-btn" onclick="signInWithGoogle()" style="display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#3c4043;border:1px solid #dadce0;">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Googleでログイン
+      </button>
+      <div class="ob-err" id="ob-err1" style="margin-top:10px;"></div>
     </div>
 
-    <!-- STEP 2: 名前入力（招待コードあり） -->
+    <!-- STEP 2: グループ選択（ログイン後・既存グループがある場合） -->
     <div class="ob-step" id="ob-s2">
-      <div class="ob-label">あなたの名前</div>
-      <input class="ob-input" id="ob-name" placeholder="例：お父さん"/>
-      <div class="ob-label" style="margin-top:4px;">アイコンカラー</div>
-      <div class="color-row" id="ob-colors" style="margin-bottom:16px;">
-        <div class="col-opt sel" data-c="#534AB7" style="background:#534AB7;" onclick="pickObColor(this)"></div>
-        <div class="col-opt" data-c="#1D9E75" style="background:#1D9E75;" onclick="pickObColor(this)"></div>
-        <div class="col-opt" data-c="#D85A30" style="background:#D85A30;" onclick="pickObColor(this)"></div>
-        <div class="col-opt" data-c="#D4537E" style="background:#D4537E;" onclick="pickObColor(this)"></div>
-        <div class="col-opt" data-c="#378ADD" style="background:#378ADD;" onclick="pickObColor(this)"></div>
-      </div>
+      <div class="ob-label">グループに参加する</div>
+      <input class="ob-input" id="ob-code" placeholder="招待コード（例：FAMI-1234）" maxlength="9" oninput="formatCode(this)"/>
       <div class="ob-err" id="ob-err2"></div>
-      <button class="ob-btn" onclick="completeOnboarding()">アプリを始める</button>
-      <button class="ob-back" onclick="goStep('ob-s1')">← 戻る</button>
+      <button class="ob-btn" onclick="checkCode()">参加する</button>
+      <div class="ob-divider"><span>または</span></div>
+      <button class="ob-btn" style="background:#f0eeff;color:#534AB7;" onclick="goStep('ob-s3')">新しくグループを作る</button>
     </div>
 
     <!-- STEP 3: 新規グループ作成 -->
     <div class="ob-step" id="ob-s3">
       <div class="ob-label">グループ名</div>
       <input class="ob-input" id="ob-group" placeholder="例：山田家"/>
-      <div class="ob-label">あなたの名前</div>
-      <input class="ob-input" id="ob-name2" placeholder="例：お父さん"/>
       <div class="ob-label" style="margin-top:4px;">アイコンカラー</div>
       <div class="color-row" id="ob-colors2" style="margin-bottom:16px;">
         <div class="col-opt sel" data-c="#534AB7" style="background:#534AB7;" onclick="pickObColor2(this)"></div>
@@ -234,7 +224,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku
       </div>
       <div class="ob-err" id="ob-err3"></div>
       <button class="ob-btn" onclick="createGroup()">グループを作成</button>
-      <button class="ob-back" onclick="goStep('ob-s1')">← 戻る</button>
+      <button class="ob-back" onclick="goStep('ob-s2')">← 戻る</button>
     </div>
   </div>
 </div>
@@ -362,7 +352,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku
         <button class="btn-green" onclick="runDiag()" style="font-size:12px;padding:7px 14px;">再診断</button>
       </div>
       <div style="text-align:center;padding:16px 0 8px;">
-        <span style="font-size:11px;color:var(--color-text-tertiary);">v1.0.4 · 2026-05-15</span>
+        <span style="font-size:11px;color:var(--color-text-tertiary);">v1.0.5 · 2026-05-15</span>
       </div>
     </div>
   </div>
@@ -406,6 +396,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
@@ -420,16 +411,17 @@ firebase.initializeApp({
   appId: "1:958721717620:web:9c6630dee9f5201b2a6821"
 });
 const db = firebase.database();
-// オフライン時もデータを保持・再接続時に自動同期
+const auth = firebase.auth();
 firebase.database().goOnline();
 
 // ── ローカル状態 ──────────────────────────────────
-let myId     = localStorage.getItem('fm_id')      || '';
-let myName   = localStorage.getItem('fm_name')    || '';
-let myColor  = localStorage.getItem('fm_color')   || '#534AB7';
-let groupId  = localStorage.getItem('fm_group')   || '';
-let groupName= localStorage.getItem('fm_gname')   || '';
-let inviteCode = localStorage.getItem('fm_code')  || '';
+let myId     = '';
+let myName   = '';
+let myColor  = localStorage.getItem('fm_color') || '#534AB7';
+let groupId  = '';
+let groupName= '';
+let inviteCode = '';
+let currentUser = null; // Firebase Authユーザー
 
 let members  = {};
 let messages = [];
@@ -446,29 +438,69 @@ let selCol     = '#534AB7';
 
 // ── URLから招待コードを自動読み込み ──────────────
 const urlCode = new URLSearchParams(location.search).get('code');
-if(urlCode) {
-  // URLパラメータはハイフンなし(ABCD1234)で渡ってくるので整形して挿入
-  let raw = urlCode.replace(/[^A-Za-z0-9]/g,'').toUpperCase();
-  if(raw.length > 4) raw = raw.slice(0,4) + '-' + raw.slice(4,8);
-  document.getElementById('ob-code').value = raw;
-}
 
-// ── セッションチェック ────────────────────────────
-console.log('[FM] session check', {myId, myName, groupId, inviteCode});
-// appは常に表示。オンボーディングは必要な時だけ上に重ねる
-if(myId && myName && groupId) {
-  document.getElementById('onboarding').style.display = 'none';
-  // DOMが確実に構築されてからstartApp
-  if(document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', startApp);
+// ── Firebase Auth 状態監視（セッション管理の中心） ──
+auth.onAuthStateChanged(user => {
+  if(user) {
+    currentUser = user;
+    myId    = user.uid;
+    myName  = localStorage.getItem('fm_name_' + myId) || user.displayName || '';
+    myColor = localStorage.getItem('fm_color') || '#534AB7';
+    groupId = localStorage.getItem('fm_group_' + myId) || '';
+    groupName = localStorage.getItem('fm_gname_' + myId) || '';
+    inviteCode = localStorage.getItem('fm_code_' + myId) || '';
+    console.log('[FM] auth OK', {myId, myName, groupId});
+
+    if(groupId) {
+      // ログイン済み＋グループ参加済み → アプリ起動
+      document.getElementById('onboarding').style.display = 'none';
+      // URLに招待コードがあれば自動でグループ変更を促す
+      if(urlCode) {
+        const raw = urlCode.replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+        const formatted = raw.length > 4 ? raw.slice(0,4)+'-'+raw.slice(4,8) : raw;
+        if(confirm(`招待コード ${formatted} のグループに参加しますか？`)) {
+          groupId = ''; // リセットしてグループ参加フローへ
+          goStep('ob-s2');
+          document.getElementById('ob-code').value = formatted;
+          document.getElementById('onboarding').style.display = 'flex';
+          return;
+        }
+      }
+      startApp();
+    } else {
+      // ログイン済みだがグループ未参加 → グループ選択へ
+      if(urlCode) {
+        const raw = urlCode.replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+        const formatted = raw.length > 4 ? raw.slice(0,4)+'-'+raw.slice(4,8) : raw;
+        document.getElementById('ob-code').value = formatted;
+      }
+      goStep('ob-s2');
+      document.getElementById('onboarding').style.display = 'flex';
+    }
   } else {
-    startApp();
+    // 未ログイン → Googleログイン画面
+    currentUser = null;
+    goStep('ob-s1');
+    document.getElementById('onboarding').style.display = 'flex';
+    if(urlCode) {
+      // URLコードをセッションストレージに一時保存
+      sessionStorage.setItem('pendingCode', urlCode);
+    }
   }
-} else {
-  document.getElementById('onboarding').style.display = 'flex';
-}
+});
 
 // ── オンボーディング ──────────────────────────────
+function signInWithGoogle() {
+  const btn = document.getElementById('google-login-btn');
+  if(btn) { btn.disabled = true; }
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider).catch(err => {
+    const errEl = document.getElementById('ob-err1');
+    if(errEl) errEl.textContent = 'ログインに失敗しました。もう一度お試しください。';
+    if(btn) btn.disabled = false;
+  });
+}
+
 function goStep(id) {
   document.querySelectorAll('.ob-step').forEach(el => el.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -489,19 +521,23 @@ function generateCode() {
 
 function checkCode() {
   const code = document.getElementById('ob-code').value.trim().toUpperCase();
-  document.getElementById('ob-err1').textContent = '';
-  if(code.length < 9) { document.getElementById('ob-err1').textContent = '招待コードを正しく入力してください'; return; }
+  const errEl = document.getElementById('ob-err2');
+  errEl.textContent = '';
+  if(code.length < 9) { errEl.textContent = '招待コードを正しく入力してください'; return; }
   const codeKey = code.replaceAll('-','');
   db.ref('groups').orderByChild('code').equalTo(codeKey).once('value').then(snap => {
-    if(!snap.val()) { document.getElementById('ob-err1').textContent = '招待コードが見つかりません。確認してください。'; return; }
+    if(!snap.val()) { errEl.textContent = '招待コードが見つかりません'; return; }
     const gid = Object.keys(snap.val())[0];
-    groupId   = gid;
-    groupName = snap.val()[gid].name;
+    groupId    = gid;
+    groupName  = snap.val()[gid].name;
     inviteCode = code;
-    localStorage.setItem('fm_group', groupId);
-    localStorage.setItem('fm_gname', groupName);
-    localStorage.setItem('fm_code',  inviteCode);
-    goStep('ob-s2');
+    myName = myName || (currentUser ? currentUser.displayName : '') || 'メンバー';
+    saveUserData();
+    db.ref(`groups/${groupId}/members/${myId}`).set({
+      name: myName, color: myColor, history: [],
+      email: currentUser?.email || '', photoURL: currentUser?.photoURL || ''
+    });
+    hideOnboarding();
   });
 }
 
@@ -516,53 +552,37 @@ function pickObColor2(el) {
   el.classList.add('sel');
 }
 
-function completeOnboarding() {
-  const name = document.getElementById('ob-name').value.trim();
-  document.getElementById('ob-err2').textContent = '';
-  if(!name) { document.getElementById('ob-err2').textContent = '名前を入力してください'; return; }
-  myId    = 'u_' + Math.random().toString(36).slice(2,9);
-  myName  = name;
-  myColor = obColor;
-  localStorage.setItem('fm_id',    myId);
-  localStorage.setItem('fm_name',  myName);
-  localStorage.setItem('fm_color', myColor);
-  localStorage.setItem('fm_group', groupId);
-  localStorage.setItem('fm_gname', groupName);
-  localStorage.setItem('fm_code',  inviteCode);
-  db.ref(`groups/${groupId}/members/${myId}`).set({ name: myName, color: myColor, history: [] });
-  hideOnboarding();
-}
 
 function createGroup() {
   const gname = document.getElementById('ob-group').value.trim();
-  const name  = document.getElementById('ob-name2').value.trim();
   document.getElementById('ob-err3').textContent = '';
   if(!gname) { document.getElementById('ob-err3').textContent = 'グループ名を入力してください'; return; }
-  if(!name)  { document.getElementById('ob-err3').textContent = '名前を入力してください'; return; }
 
   const code = generateCode();
-  groupId   = 'g_' + Math.random().toString(36).slice(2,9);
-  groupName = gname;
-  inviteCode= code;
-  myId      = 'u_' + Math.random().toString(36).slice(2,9);
-  myName    = name;
-  myColor   = obColor2;
+  groupId    = 'g_' + myId.slice(0,8);
+  groupName  = gname;
+  inviteCode = code;
+  myName     = myName || (currentUser ? currentUser.displayName : '') || 'メンバー';
+  myColor    = obColor2 || myColor;
 
-  localStorage.setItem('fm_id',    myId);
-  localStorage.setItem('fm_name',  myName);
-  localStorage.setItem('fm_color', myColor);
-  localStorage.setItem('fm_group', groupId);
-  localStorage.setItem('fm_gname', groupName);
-  localStorage.setItem('fm_code',  inviteCode);
-
+  saveUserData();
   const codeKey = code.replaceAll('-','');
   db.ref(`groups/${groupId}`).set({
-    name: groupName,
-    code: codeKey,
-    createdAt: Date.now(),
-    members: { [myId]: { name: myName, color: myColor, history: [] } }
+    name: groupName, code: codeKey, createdAt: Date.now(),
+    members: { [myId]: {
+      name: myName, color: myColor, history: [],
+      email: currentUser?.email || '', photoURL: currentUser?.photoURL || ''
+    }}
   });
   hideOnboarding();
+}
+
+function saveUserData() {
+  localStorage.setItem('fm_name_'  + myId, myName);
+  localStorage.setItem('fm_color',          myColor);
+  localStorage.setItem('fm_group_' + myId, groupId);
+  localStorage.setItem('fm_gname_' + myId, groupName);
+  localStorage.setItem('fm_code_'  + myId, inviteCode);
 }
 
 function hideOnboarding() {
@@ -575,20 +595,27 @@ function hideOnboarding() {
 }
 
 function logout() {
-  if(!confirm('ログアウトしますか？\nこのデバイスのデータが削除されます。')) return;
-  ['fm_id','fm_name','fm_color','fm_group','fm_gname','fm_code'].forEach(k => localStorage.removeItem(k));
-  location.reload();
+  if(!confirm('ログアウトしますか？')) return;
+  // Firebase Authからサインアウト
+  auth.signOut().then(() => {
+    // このユーザーのlocalStorageキーを削除
+    if(myId) {
+      ['fm_name_','fm_group_','fm_gname_','fm_code_'].forEach(k => localStorage.removeItem(k + myId));
+    }
+    localStorage.removeItem('fm_color');
+  });
 }
 
 // ── アプリ起動 ────────────────────────────────────
 function startApp() {
-  // localStorageから最新値を再読み込み（ブラウザ再起動後も確実に復元）
-  myId       = localStorage.getItem('fm_id')    || myId;
-  myName     = localStorage.getItem('fm_name')  || myName;
-  myColor    = localStorage.getItem('fm_color') || myColor;
-  groupId    = localStorage.getItem('fm_group') || groupId;
-  groupName  = localStorage.getItem('fm_gname') || groupName;
-  inviteCode = localStorage.getItem('fm_code')  || inviteCode;
+  // Auth UIDベースのlocalStorageから読み込み
+  if(myId) {
+    myName     = localStorage.getItem('fm_name_'  + myId) || myName;
+    myColor    = localStorage.getItem('fm_color')          || myColor;
+    groupId    = localStorage.getItem('fm_group_' + myId) || groupId;
+    groupName  = localStorage.getItem('fm_gname_' + myId) || groupName;
+    inviteCode = localStorage.getItem('fm_code_'  + myId) || inviteCode;
+  }
   console.log('[FM] startApp called', {myId, myName, groupId, inviteCode});
 
   document.getElementById('group-name-header').textContent = groupName || '家族マップ';
@@ -1020,7 +1047,7 @@ function saveName() {
   const name = document.getElementById('name-input').value.trim();
   if(!name) { showToast('名前を入力してください'); return; }
   myName = name;
-  localStorage.setItem('fm_name', myName);
+  localStorage.setItem('fm_name_' + myId, myName);
   db.ref(`groups/${groupId}/members/${myId}`).update({ name:myName });
   showToast('保存しました');
 }
@@ -1042,8 +1069,11 @@ function saveColor() {
 function deleteAccount() {
   if(!confirm('アカウントを削除しますか？\nグループからあなたの情報と位置情報が完全に削除されます。\nこの操作は取り消せません。')) return;
   db.ref(`groups/${groupId}/members/${myId}`).remove().then(() => {
-    ['fm_id','fm_name','fm_color','fm_group','fm_gname','fm_code'].forEach(k => localStorage.removeItem(k));
-    location.reload();
+    if(myId) {
+      ['fm_name_','fm_group_','fm_gname_','fm_code_'].forEach(k => localStorage.removeItem(k + myId));
+    }
+    localStorage.removeItem('fm_color');
+    return auth.signOut();
   });
 }
 
