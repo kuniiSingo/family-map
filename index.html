@@ -390,6 +390,8 @@ firebase.initializeApp({
   appId: "1:958721717620:web:9c6630dee9f5201b2a6821"
 });
 const db = firebase.database();
+// オフライン時もデータを保持・再接続時に自動同期
+firebase.database().goOnline();
 
 // ── ローカル状態 ──────────────────────────────────
 let myId     = localStorage.getItem('fm_id')      || '';
@@ -674,10 +676,17 @@ function removeLeafletMember(id) {
 
 // ── Firebase リスナー ─────────────────────────────
 function startFirebaseListeners() {
+  // 接続タイムアウト検知（10秒以内に接続できなければ再試行）
+  let connTimeout = setTimeout(() => {
+    firebase.database().goOffline();
+    setTimeout(() => firebase.database().goOnline(), 500);
+  }, 10000);
+
   db.ref('.info/connected').on('value', s => {
     const ok = s.val();
+    if(ok) clearTimeout(connTimeout);
     document.getElementById('sdot').className = 'sdot' + (ok?' on':'');
-    document.getElementById('stxt').textContent = ok ? '接続済み' : '再接続中...';
+    document.getElementById('stxt').textContent = ok ? '接続済み' : '接続中...';
   });
 
   db.ref(`groups/${groupId}/members`).on('value', snap => {
@@ -709,22 +718,35 @@ function startFirebaseListeners() {
 // ── アプリ復帰時の再接続 ────────────────────────────
 document.addEventListener('visibilitychange', () => {
   if(document.visibilityState === 'visible') {
-    // 画面復帰時にFirebase接続を確認・GPSを再取得
-    if(groupId) {
-      db.ref(`groups/${groupId}/members`).once('value').then(snap => {
-        const m = snap.val() || {};
-        Object.keys(m).forEach(id => updateLeafletMember(id, m[id]));
-        renderMemberChips();
-        renderMembersList();
-      });
-    }
-    // GPS位置を即時取得して送信
-    if(myName && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        pos => pushLoc(pos.coords.latitude, pos.coords.longitude),
-        () => {}
-      );
-    }
+    // Firebase接続を強制リフレッシュ
+    firebase.database().goOffline();
+    setTimeout(() => {
+      firebase.database().goOnline();
+      // データを再取得
+      if(groupId) {
+        db.ref(`groups/${groupId}/members`).once('value').then(snap => {
+          members = snap.val() || {};
+          Object.keys(members).forEach(id => updateLeafletMember(id, members[id]));
+          renderMemberChips();
+          renderMembersList();
+        });
+        db.ref(`groups/${groupId}/messages`).limitToLast(100).once('value').then(snap => {
+          const raw = snap.val() || {};
+          messages = Object.values(raw).sort((a,b) => a.ts - b.ts);
+          renderMessages(false);
+        });
+      }
+      // GPS位置を即時取得して送信
+      if(myName && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          pos => pushLoc(pos.coords.latitude, pos.coords.longitude),
+          () => {}
+        );
+      }
+    }, 300);
+  } else {
+    // バックグラウンド移行時はオフラインに（電池節約）
+    firebase.database().goOffline();
   }
 });
 
