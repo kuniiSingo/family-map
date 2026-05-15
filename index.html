@@ -49,7 +49,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku
 .view.show{display:flex;}
 
 /* ── MAP（全画面） ── */
-#view-map{position:relative;flex:1;min-height:0;}
+#view-map{position:relative;flex:1;min-height:0;overflow:hidden;}
 #leaflet-map{position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;width:100%;height:100%;}
 
 /* マップ上のUI */
@@ -232,7 +232,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku
 </div>
 
 <!-- ── APP ── -->
-<div id="app" style="display:none;">
+<div id="app" style="visibility:hidden;pointer-events:none;">
   <div class="header">
     <div class="header-title">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#534AB7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -410,6 +410,7 @@ if(urlCode) document.getElementById('ob-code').value = urlCode.toUpperCase();
 
 // ── セッションチェック ────────────────────────────
 if(myId && myName && groupId) {
+  document.getElementById('onboarding').style.display = 'none';
   startApp();
 } else {
   document.getElementById('onboarding').style.display = 'flex';
@@ -524,7 +525,8 @@ function logout() {
 
 // ── アプリ起動 ────────────────────────────────────
 function startApp() {
-  document.getElementById('app').style.display = 'flex';
+  document.getElementById('app').style.visibility = 'visible';
+  document.getElementById('app').style.pointerEvents = 'auto';
   document.getElementById('group-name-header').textContent = groupName || '家族マップ';
 
   initLeaflet();
@@ -547,7 +549,6 @@ const leafletPolylines = {};
 const leafletDots      = {};
 
 function initLeaflet() {
-  // DOM・CSSが確定してから初期化（公開環境でのタイルロード失敗を防ぐ）
   function doInit() {
     const mapEl = document.getElementById('leaflet-map');
     if(!mapEl || mapEl.offsetHeight === 0) {
@@ -562,19 +563,13 @@ function initLeaflet() {
     });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      crossOrigin: true
+      subdomains: ['a','b','c']
     }).addTo(map);
     L.control.attribution({ prefix: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(map);
     L.control.zoom({ position: 'bottomleft' }).addTo(map);
-
-    // オーバーレイUI要素をマップコンテナに移動
-    ['member-chips','locate-btn','history-panel'].forEach(id => {
-      mapEl.appendChild(document.getElementById(id));
-    });
-
     map.invalidateSize();
   }
-  setTimeout(doInit, 150);
+  setTimeout(doInit, 200);
 }
 
 function makeIcon(name, color) {
