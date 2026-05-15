@@ -49,8 +49,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku
 .view.show{display:flex;}
 
 /* ── MAP（全画面） ── */
-#view-map{position:relative;}
-#leaflet-map{position:absolute;inset:0;z-index:1;}
+#view-map{position:relative;flex:1;min-height:0;}
+#leaflet-map{position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;width:100%;height:100%;}
 
 /* マップ上のUI */
 .map-ui{position:absolute;z-index:10;pointer-events:none;}
@@ -530,6 +530,8 @@ function startApp() {
   initLeaflet();
   startFirebaseListeners();
   startGPS();
+  // 初期表示後にもサイズ再計算
+  setTimeout(() => { if(map) map.invalidateSize(); }, 500);
 
   // 設定画面の招待コード表示
   document.getElementById('invite-code-display').textContent = inviteCode || '------';
@@ -545,18 +547,34 @@ const leafletPolylines = {};
 const leafletDots      = {};
 
 function initLeaflet() {
-  map = L.map('leaflet-map', { center:[35.6812,139.7671], zoom:15, zoomControl:false, attributionControl:false });
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ maxZoom:19 }).addTo(map);
-  L.control.attribution({ prefix:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(map);
-  L.control.zoom({ position:'bottomleft' }).addTo(map);
+  // DOM・CSSが確定してから初期化（公開環境でのタイルロード失敗を防ぐ）
+  function doInit() {
+    const mapEl = document.getElementById('leaflet-map');
+    if(!mapEl || mapEl.offsetHeight === 0) {
+      setTimeout(doInit, 100);
+      return;
+    }
+    map = L.map('leaflet-map', {
+      center: [35.6812, 139.7671],
+      zoom: 15,
+      zoomControl: false,
+      attributionControl: false
+    });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      crossOrigin: true
+    }).addTo(map);
+    L.control.attribution({ prefix: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(map);
+    L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
-  // マップUI要素をLeafletのコンテナに対してオーバーレイ
-  const mc = document.getElementById('leaflet-map');
-  mc.style.position = 'relative';
-  ['member-chips','locate-btn','history-panel'].forEach(id => {
-    const el = document.getElementById(id);
-    mc.appendChild(el);
-  });
+    // オーバーレイUI要素をマップコンテナに移動
+    ['member-chips','locate-btn','history-panel'].forEach(id => {
+      mapEl.appendChild(document.getElementById(id));
+    });
+
+    map.invalidateSize();
+  }
+  setTimeout(doInit, 150);
 }
 
 function makeIcon(name, color) {
@@ -874,7 +892,8 @@ function showTab(t) {
     if(tab) tab.classList.toggle('active', v===t);
   });
   if(t==='map') {
-    setTimeout(() => map && map.invalidateSize(), 80);
+    setTimeout(() => { if(map) map.invalidateSize(); }, 50);
+    setTimeout(() => { if(map) map.invalidateSize(); }, 300);
     closeHistory();
   }
   if(t==='chat') {
