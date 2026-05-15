@@ -57,7 +57,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku
 
 /* ── MAP（全画面） ── */
 #view-map{position:relative;flex:1;min-height:0;overflow:hidden;}
-#leaflet-map{width:100%;z-index:1;display:block;}
+#leaflet-map{position:absolute;top:0;left:0;right:0;bottom:0;z-index:1;}
 
 /* マップ上のUI */
 .map-ui{position:absolute;z-index:10;pointer-events:none;}
@@ -240,7 +240,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku
 </div>
 
 <!-- ── APP ── -->
-<div id="app" style="opacity:0;pointer-events:none;transition:opacity .3s;">
+<div id="app">
   <div class="header">
     <div class="header-title">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#534AB7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -355,7 +355,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku
         <button class="btn-green" onclick="runDiag()" style="font-size:12px;padding:7px 14px;">再診断</button>
       </div>
       <div style="text-align:center;padding:16px 0 8px;">
-        <span style="font-size:11px;color:var(--color-text-tertiary);">v1.0.1 · 2026-05-15</span>
+        <span style="font-size:11px;color:var(--color-text-tertiary);">v1.0.3 · 2026-05-15</span>
       </div>
     </div>
   </div>
@@ -433,13 +433,16 @@ if(urlCode) {
 
 // ── セッションチェック ────────────────────────────
 console.log('[FM] session check', {myId, myName, groupId, inviteCode});
+// appは常に表示。オンボーディングは必要な時だけ上に重ねる
 if(myId && myName && groupId) {
-  // 認証済み: オンボーディングを即非表示にしてアプリ起動
-  const ob = document.getElementById('onboarding');
-  ob.style.display = 'none';
-  startApp();
+  document.getElementById('onboarding').style.display = 'none';
+  // DOMが確実に構築されてからstartApp
+  if(document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startApp);
+  } else {
+    startApp();
+  }
 } else {
-  console.log('[FM] -> onboarding (missing:', !myId?'myId':'', !myName?'myName':'', !groupId?'groupId':'', ')');
   document.getElementById('onboarding').style.display = 'flex';
 }
 
@@ -543,8 +546,10 @@ function createGroup() {
 function hideOnboarding() {
   const ob = document.getElementById('onboarding');
   ob.classList.add('hide');
-  setTimeout(() => { ob.style.display = 'none'; }, 400);
-  startApp();
+  setTimeout(() => {
+    ob.style.display = 'none';
+    startApp();
+  }, 400);
 }
 
 function logout() {
@@ -564,25 +569,16 @@ function startApp() {
   inviteCode = localStorage.getItem('fm_code')  || inviteCode;
   console.log('[FM] startApp called', {myId, myName, groupId, inviteCode});
 
-  const appEl = document.getElementById('app');
-  appEl.style.opacity = '1';
-  appEl.style.pointerEvents = 'auto';
   document.getElementById('group-name-header').textContent = groupName || '家族マップ';
 
-  initLeaflet();
+  // Leaflet初期化（#view-mapが表示されている前提）
+  setTimeout(() => {
+    initLeaflet();
+    [200, 600, 1200].forEach(d => setTimeout(() => { if(map) map.invalidateSize(); }, d));
+  }, 50);
+
   startFirebaseListeners();
   startGPS();
-  // 段階的にマップサイズを再計算（描画タイミングのずれを吸収）
-  [300, 800, 1500, 3000].forEach(delay => {
-    setTimeout(() => {
-      if(map) {
-        map.invalidateSize();
-        // メンバーが既にいれば再描画
-        const ids = Object.keys(members);
-        if(ids.length > 0) ids.forEach(id => updateLeafletMember(id, members[id]));
-      }
-    }, delay);
-  });
   document.getElementById('locate-btn').classList.add('visible');
 
   // 設定画面の招待コード表示
@@ -599,26 +595,7 @@ const leafletPolylines = {};
 const leafletDots      = {};
 
 function initLeaflet() {
-  // #leaflet-mapに直接サイズを指定してLeafletを確実に初期化
-  const mapEl = document.getElementById('leaflet-map');
-  const viewMap = document.getElementById('view-map');
-  const app = document.getElementById('app');
-
-  // ヘッダーとタブバーの高さを引いた残り全部をマップに使う
-  function getMapHeight() {
-    const appH = window.innerHeight;
-    const header = document.querySelector('.header');
-    const tabbar = document.querySelector('.tab-bar');
-    const hh = header ? header.offsetHeight : 48;
-    const th = tabbar ? tabbar.offsetHeight : 50;
-    const h = appH - hh - th;
-    console.log('[FM] mapHeight:', h, 'appH:', appH, 'hh:', hh, 'th:', th);
-    return h > 100 ? h : appH * 0.6; // 最低限の高さを保証
-  }
-
-  const h = getMapHeight();
-  mapEl.style.height = h + 'px';
-  mapEl.style.width = '100%';
+  if(map) return; // 二重初期化防止
 
   map = L.map('leaflet-map', {
     center: [35.6812, 139.7671],
@@ -626,13 +603,7 @@ function initLeaflet() {
     zoomControl: false,
     attributionControl: false
   });
-  // 起動時に現在地へ移動
-  if(navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(pos => {
-      map.setView([pos.coords.latitude, pos.coords.longitude], 16, {animate:false});
-      pushLoc(pos.coords.latitude, pos.coords.longitude);
-    }, () => {});
-  }
+
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     subdomains: ['a','b','c']
@@ -642,17 +613,19 @@ function initLeaflet() {
   }).addTo(map);
   L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
-  // リサイズ対応
-  window.addEventListener('resize', () => {
-    if(map) {
-      mapEl.style.height = getMapHeight() + 'px';
-      map.invalidateSize();
-    }
-  });
+  // 起動時に現在地へ移動
+  if(navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      map.setView([pos.coords.latitude, pos.coords.longitude], 16, {animate:false});
+      pushLoc(pos.coords.latitude, pos.coords.longitude);
+    }, () => {});
+  }
 
-  setTimeout(() => { if(map) map.invalidateSize(); }, 100);
-  setTimeout(() => { if(map) map.invalidateSize(); }, 500);
-  setTimeout(() => { if(map) map.invalidateSize(); }, 1000);
+  // リサイズ対応
+  window.addEventListener('resize', () => { if(map) map.invalidateSize(); });
+
+  // 複数タイミングで再計算
+  [100, 500, 1000, 2000].forEach(d => setTimeout(() => { if(map) map.invalidateSize(); }, d));
 }
 
 function makeIcon(name, color) {
