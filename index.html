@@ -64,7 +64,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku
 .map-ui *{pointer-events:auto;}
 
 /* メンバーチップ（上部） */
-#member-chips{top:12px;left:0;right:0;display:flex;gap:8px;padding:0 12px;overflow-x:auto;-webkit-overflow-scrolling:touch;justify-content:center;flex-wrap:nowrap;}
+#member-chips{top:12px;left:0;right:0;display:flex;gap:6px;padding:0 10px;overflow-x:auto;-webkit-overflow-scrolling:touch;justify-content:flex-start;flex-wrap:nowrap;scrollbar-width:none;}
 #member-chips::-webkit-scrollbar{display:none;}
 .mchip{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;border:1.5px solid transparent;cursor:pointer;white-space:nowrap;font-size:12px;background:rgba(255,255,255,.92);backdrop-filter:blur(6px);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.15);}
 .mchip.sel{font-weight:700;box-shadow:0 2px 10px rgba(0,0,0,.2);}
@@ -316,9 +316,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku
   <div class="view" id="view-members">
     <div class="members-scroll">
       <div id="members-list"></div>
-      <button class="add-btn-m" onclick="openModal()">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        メンバーを追加
+      <button class="add-btn-m" onclick="openInviteModal()">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+        メンバーを招待する
       </button>
     </div>
   </div>
@@ -332,22 +332,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku
         <input class="s-input" id="name-input" placeholder="例：お父さん"/>
         <button class="btn-green" onclick="saveName()">保存する</button>
       </div>
+
       <div class="s-card">
-        <h3>🔑 招待コード</h3>
-        <p>このコードを家族に伝えると、同じグループに参加できます</p>
-        <div class="invite-code-box" id="invite-code-display">------</div>
-        <button class="btn-purple" onclick="copyInviteCode()">コードをコピー</button>
-      </div>
-      <div class="s-card">
-        <h3>🔗 URLで招待</h3>
-        <p>招待コード入りのURLをLINEで送るとスムーズです</p>
-        <div class="share-url-box" id="share-url-display"></div>
-        <button class="btn-purple" onclick="copyShareUrl()">URLをコピー</button>
+        <h3>🎨 アイコンカラー変更</h3>
+        <p>マップやメッセージに表示されるアイコンの色を変更します</p>
+        <div class="color-row" id="settings-colors" style="margin-bottom:12px;">
+          <div class="col-opt" data-c="#534AB7" style="background:#534AB7" onclick="pickSettingsColor(this)"></div>
+          <div class="col-opt" data-c="#1D9E75" style="background:#1D9E75" onclick="pickSettingsColor(this)"></div>
+          <div class="col-opt" data-c="#D85A30" style="background:#D85A30" onclick="pickSettingsColor(this)"></div>
+          <div class="col-opt" data-c="#D4537E" style="background:#D4537E" onclick="pickSettingsColor(this)"></div>
+          <div class="col-opt" data-c="#378ADD" style="background:#378ADD" onclick="pickSettingsColor(this)"></div>
+          <div class="col-opt" data-c="#BA7517" style="background:#BA7517" onclick="pickSettingsColor(this)"></div>
+        </div>
+        <button class="btn-purple" onclick="saveColor()">カラーを保存</button>
       </div>
       <div class="s-card">
         <h3>🚪 ログアウト</h3>
         <p>このデバイスのデータを削除してログアウトします</p>
         <button class="btn-danger" onclick="logout()">ログアウト</button>
+      </div>
+      <div class="s-card">
+        <h3>🗑️ アカウント削除</h3>
+        <p>グループからあなたのアカウントと位置情報を完全に削除します。この操作は取り消せません。</p>
+        <button class="btn-danger" onclick="deleteAccount()">アカウントを削除</button>
       </div>
       <div class="s-card" id="diag-card">
         <h3>🔍 接続診断</h3>
@@ -355,7 +362,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku
         <button class="btn-green" onclick="runDiag()" style="font-size:12px;padding:7px 14px;">再診断</button>
       </div>
       <div style="text-align:center;padding:16px 0 8px;">
-        <span style="font-size:11px;color:var(--color-text-tertiary);">v1.0.3 · 2026-05-15</span>
+        <span style="font-size:11px;color:var(--color-text-tertiary);">v1.0.4 · 2026-05-15</span>
       </div>
     </div>
   </div>
@@ -377,6 +384,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku
       <button class="btn-cancel" onclick="closeModal()">キャンセル</button>
       <button class="btn-add" onclick="addMember()">追加</button>
     </div>
+  </div>
+</div>
+
+<!-- 招待モーダル -->
+<div class="modal-bg" id="invite-modal">
+  <div class="modal-box">
+    <h2>メンバーを招待</h2>
+    <p style="font-size:13px;color:#888;margin-bottom:16px;line-height:1.6;">招待コードまたはURLを家族に送ってください</p>
+    <div style="font-size:12px;color:#888;margin-bottom:6px;font-weight:500;">招待コード</div>
+    <div class="invite-code-box" id="invite-code-display" style="font-size:22px;font-weight:700;letter-spacing:6px;color:#534AB7;background:#f2f0ff;padding:14px;border-radius:8px;text-align:center;margin-bottom:10px;font-family:monospace;">------</div>
+    <button class="btn-purple" onclick="copyInviteCode()" style="width:100%;margin-bottom:12px;">コードをコピー</button>
+    <div style="font-size:12px;color:#888;margin-bottom:6px;font-weight:500;">招待URL（LINEで送る）</div>
+    <div class="share-url-box" id="share-url-display" style="font-size:12px;color:#534AB7;background:#f2f0ff;padding:10px 12px;border-radius:8px;word-break:break-all;margin-bottom:10px;font-family:monospace;line-height:1.5;"></div>
+    <button class="btn-purple" onclick="copyShareUrl()" style="width:100%;margin-bottom:12px;">URLをコピー</button>
+    <button class="btn-cancel" onclick="closeInviteModal()" style="width:100%;padding:12px;background:#f5f5f5;border:none;border-radius:10px;font-size:14px;cursor:pointer;">閉じる</button>
   </div>
 </div>
 
@@ -579,12 +601,10 @@ function startApp() {
 
   startFirebaseListeners();
   startGPS();
+  requestNotificationPermission();
   document.getElementById('locate-btn').classList.add('visible');
 
   // 設定画面の招待コード表示
-  document.getElementById('invite-code-display').textContent = inviteCode || '------';
-  document.getElementById('share-url-display').textContent =
-    `${location.origin}${location.pathname}?code=${(inviteCode||'').replaceAll('-','')}`;
   document.getElementById('name-input').value = myName;
 }
 
@@ -716,7 +736,14 @@ function startFirebaseListeners() {
     const chatVisible = document.getElementById('view-chat').classList.contains('show');
     if(unread > 0 && !chatVisible) { badge.style.display=''; badge.textContent = unread > 9 ? '9+' : unread; }
     else badge.style.display = 'none';
-    renderMessages(messages.length > prev); // 新着のみアニメーション
+    renderMessages(messages.length > prev);
+    // 新着メッセージのPush通知
+    if(messages.length > prev) {
+      const latest = messages[messages.length - 1];
+      if(latest && latest.senderId !== myId && latest.ts > lastRead) {
+        sendPushNotification(latest.senderName || members[latest.senderId]?.name || '家族', latest.text);
+      }
+    }
   });
 }
 
@@ -861,7 +888,7 @@ function renderMembersList() {
         <div class="m-name">${m.name}${id===myId?' <span style="font-size:11px;color:#aaa;font-weight:400;">(自分)</span>':''}</div>
         <div class="m-status" style="color:${isOnline(m)?'#1D9E75':'#ccc'};">${isOnline(m)?'● オンライン':'● オフライン'}</div>
       </div>
-      ${id!==myId?`<button class="del-btn" onclick="removeMember('${id}')">×</button>`:''}
+
     </div>`;
   }).join('');
 }
@@ -919,6 +946,28 @@ function sendMsg() {
   renderedCount = 0;
 }
 
+// ── Push通知（Web Notification API）─────────────────
+function requestNotificationPermission() {
+  if(!('Notification' in window)) return;
+  if(Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+function sendPushNotification(senderName, text) {
+  if(!('Notification' in window)) return;
+  if(Notification.permission !== 'granted') return;
+  if(document.visibilityState === 'visible') return; // フォアグラウンドは不要
+  const n = new Notification(`${senderName}からメッセージ`, {
+    body: text,
+    icon: './icon-192.png',
+    badge: './icon-192.png',
+    tag: 'family-map-msg',
+    renotify: true,
+  });
+  n.onclick = () => { window.focus(); showTab('chat'); n.close(); };
+}
+
 // ── 音声入力 ─────────────────────────────────────
 function toggleMic() {
   if(micOn) { stopMic(); return; }
@@ -974,6 +1023,38 @@ function saveName() {
   localStorage.setItem('fm_name', myName);
   db.ref(`groups/${groupId}/members/${myId}`).update({ name:myName });
   showToast('保存しました');
+}
+
+function pickSettingsColor(el) {
+  document.querySelectorAll('#settings-colors .col-opt').forEach(e => e.classList.remove('sel'));
+  el.classList.add('sel');
+  myColor = el.dataset.c;
+}
+
+function saveColor() {
+  localStorage.setItem('fm_color', myColor);
+  db.ref(`groups/${groupId}/members/${myId}`).update({ color:myColor });
+  showToast('カラーを保存しました');
+  renderMemberChips();
+  renderMembersList();
+}
+
+function deleteAccount() {
+  if(!confirm('アカウントを削除しますか？\nグループからあなたの情報と位置情報が完全に削除されます。\nこの操作は取り消せません。')) return;
+  db.ref(`groups/${groupId}/members/${myId}`).remove().then(() => {
+    ['fm_id','fm_name','fm_color','fm_group','fm_gname','fm_code'].forEach(k => localStorage.removeItem(k));
+    location.reload();
+  });
+}
+
+function openInviteModal() {
+  document.getElementById('invite-code-display').textContent = inviteCode || '------';
+  document.getElementById('share-url-display').textContent =
+    `${location.origin}${location.pathname}?code=${(inviteCode||'').replaceAll('-','')}`;
+  document.getElementById('invite-modal').classList.add('show');
+}
+function closeInviteModal() {
+  document.getElementById('invite-modal').classList.remove('show');
 }
 function copyInviteCode() {
   navigator.clipboard.writeText(inviteCode).then(() => showToast('招待コードをコピーしました'));
@@ -1056,7 +1137,13 @@ function showTab(t) {
     document.getElementById('mbadge').style.display = 'none';
     renderChatTabs(); renderMessages(false);
   }
-  if(t==='settings') { setTimeout(runDiag, 300); }
+  if(t==='settings') {
+    setTimeout(runDiag, 300);
+    // 現在のカラーをハイライト
+    document.querySelectorAll('#settings-colors .col-opt').forEach(el => {
+      el.classList.toggle('sel', el.dataset.c === myColor);
+    });
+  }
 }
 
 // ── トースト ─────────────────────────────────────
